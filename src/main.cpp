@@ -3,6 +3,7 @@
 #include "con4.hpp"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <fstream>
 
 MCTS::Node ROOT;
 
@@ -48,6 +49,7 @@ int main()
                 SDL_DestroyRenderer(rend);
                 SDL_DestroyWindow(win);
                 SDL_Quit();
+                std::ofstream ofs("data");
                 return 1;
             }
             else if (e.type == SDL_MOUSEBUTTONDOWN)

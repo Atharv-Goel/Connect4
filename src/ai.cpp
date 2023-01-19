@@ -2,8 +2,17 @@
 #include <algorithm>
 #include <iostream>
 #include <chrono>
-#include <queue>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
+#define NUMTHREADS 8
+
+std::vector<bool> jobs;
+std::mutex jobsMutex;
+std::thread threads[NUMTHREADS];
 
 double MCTS::UCT(Node &node)
 {
@@ -148,16 +157,32 @@ void *MCTS::eval(Node* root)
 int MCTS::controller(const Con4 &board)
 {
     // Find the node corresponding to the board
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     Node* root = find(board);
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
 
     // Keep simulating paths while there are resources
-    for (int n = 0; n < 100; n++)
-    {
-        eval(root);
+    //for (int n = 0; n < 100; n++)
+    //{
+    //    eval(root);
+    //}
+
+    jobs = {};
+    for (int i = 0; i < 100; i++) {
+        jobs.push_back(0);
     }
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < NUMTHREADS; i++) {
+        threads[i] = std::thread ([&](){ while (!jobs.empty()) {
+            jobs.pop_back();
+            eval(root);
+        }});
+    }
+    for (int i = 0; i < NUMTHREADS; i++) {
+        threads[i].join();
+    }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
 
     // Modified select function that chooses child node by ranking UCT
     double max = 0;

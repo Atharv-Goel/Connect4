@@ -46,7 +46,7 @@ namespace MCTS
         std::atomic_int wins = 0;         // Number of winning simulations containing this node
         std::atomic_int visits = 0;       // Number of total sumulations containing this node
         std::atomic_int col = 0;          // Column where piece was placed last
-        std::atomic_bool turn = 0;        // Player whose turn it is
+        std::atomic_bool turn = false;        // Player whose turn it is
         std::atomic_bool leaf = true;     // Leaf node
         std::atomic_bool defined = false; // Child nodes instantiated
     };
