@@ -8,7 +8,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#define NUMTHREADS 8
+#define NUMTHREADS 1
 
 std::vector<bool> jobs;
 std::mutex jobsMutex;
@@ -16,7 +16,7 @@ std::thread threads[NUMTHREADS];
 
 double MCTS::UCT(Node &node)
 {
-    return ((double) node.wins) / node.visits + 0.7 * std::sqrt(std::log(node.parent->visits.load()) / node.visits);
+    return ((double) node.wins) / node.visits + 0.7 * std::sqrt(std::log(node.parent->visits.load()) / node.visits);;
 }
 
 MCTS::Node* MCTS::select(Node* node)
@@ -135,7 +135,7 @@ MCTS::Node* MCTS::find(const Con4 &board)
     return current;
 }
 
-void *MCTS::eval(Node* root)
+void MCTS::eval(Node* root)
 {
     int favor;
     Node* leaf = select(root);
@@ -159,30 +159,34 @@ int MCTS::controller(const Con4 &board)
     // Find the node corresponding to the board
     Node* root = find(board);
 
-    // Keep simulating paths while there are resources
-    //for (int n = 0; n < 100; n++)
-    //{
-    //    eval(root);
-    //}
-
-    jobs = {};
-    for (int i = 0; i < 100; i++) {
-        jobs.push_back(0);
-    }
-
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    for (int i = 0; i < NUMTHREADS; i++) {
-        threads[i] = std::thread ([&](){ while (!jobs.empty()) {
-            jobs.pop_back();
+    if (true)
+    {
+        // Keep simulating paths while there are resources
+        for (int n = 0; n < 100; n++)
+        {
             eval(root);
-        }});
+        }
     }
-    for (int i = 0; i < NUMTHREADS; i++) {
-        threads[i].join();
-    }
+    else {
+        jobs = {};
+        for (int i = 0; i < 100; i++) {
+            jobs.push_back(0);
+        }
 
+        for (int i = 0; i < NUMTHREADS; i++) {
+            threads[i] = std::thread ([&](){ while (!jobs.empty()) {
+                jobs.pop_back();
+                eval(root);
+            }});
+        }
+
+        for (int i = 0; i < NUMTHREADS; i++) {
+            threads[i].join();
+        }
+    }
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+    //std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
 
     // Modified select function that chooses child node by ranking UCT
     double max = 0;

@@ -6,19 +6,35 @@
 
 class Tern
 {
-
-protected:
+private:
+    //Serialization
     friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version) {
-        ar & ones;
-        ar & twos;
+    template <class Archive>
+    void save(Archive &ar, const unsigned int version) const
+    {
+        ar & to_ullong();
         ar & size;
     }
+    template <class Archive>
+    void load(Archive &ar, const unsigned int version)
+    {
+        unsigned long long temp = 0;
+        ar & temp;
+        ar & size;
+        ones = new bool[size];
+        twos = new bool[size];
+        for (int i  = 0; i < size; i++)
+        {
+            set(i, temp % 3);
+            temp /= 3;
+        }
+    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 
+protected:
     bool *ones = nullptr; // Boolean array to keep track of all ones
     bool *twos = nullptr; // Boolean array to keep track of all twos
-    int size;   // Length of arrays
+    int size;             // Length of arrays
 
 public:
     Tern(const std::size_t length); // Constructor

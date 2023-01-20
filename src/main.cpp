@@ -9,6 +9,20 @@ MCTS::Node ROOT;
 
 int main()
 {
+    {
+        std::ifstream ifs("data.txt");
+        if (ifs.peek() == std::ifstream::traits_type::eof())
+        {
+            std::cout << "No data file found, will create a new one" << std::endl;
+        }
+        else
+        {
+            boost::archive::text_iarchive ia(ifs);
+            ia >> ROOT;
+            std::cout << "Loaded data file" << std::endl;
+        }
+    }
+
     // Initialize SDL
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
@@ -49,7 +63,11 @@ int main()
                 SDL_DestroyRenderer(rend);
                 SDL_DestroyWindow(win);
                 SDL_Quit();
-                std::ofstream ofs("data");
+                {
+                    std::ofstream ofs("data.txt");
+                    boost::archive::text_oarchive oa(ofs);
+                    oa << ROOT;
+                }
                 return 1;
             }
             else if (e.type == SDL_MOUSEBUTTONDOWN)

@@ -1,11 +1,18 @@
 #pragma once
 #include "ternary.hpp"
 #include <vector>
+#include <boost/serialization/base_object.hpp>
 
 class Con4 : public Tern
 {
 
 private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<Tern>(*this);
+    }
+
     Tern same(const Tern tern) const;                    // Ternary function similar to and but only works when both trits are equal
     Tern same(const Tern tern1, const Tern tern2) const; // Ternary function similar to and but only works when both trits are equal
 

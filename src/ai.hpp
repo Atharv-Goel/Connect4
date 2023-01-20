@@ -1,7 +1,7 @@
 #pragma once
 #include "con4.hpp"
-#include <vector>
 #include <random>
+#include <boost/serialization/vector.hpp>
 
 // Chooses a random item in a vector
 template <typename T>
@@ -13,6 +13,30 @@ T *random(std::vector<T> &iterable)
     std::uniform_int_distribution<> dis(0, iterable.size() - 1);
     T *it = &iterable[dis(gen)];
     return it;
+}
+
+namespace boost
+{
+    namespace serialization
+    {
+        template <typename Archive, typename T>
+        void save(Archive &ar, const std::atomic<T> &t, const unsigned int version)
+        {
+            ar & t.load();
+        }
+        template <typename Archive, typename T>
+        void load(Archive &ar, std::atomic<T> &t, const unsigned int version)
+        {
+            T tmp;
+            ar & tmp;
+            t.store(tmp);
+        }
+        template <typename Archive, typename T>
+        void serialize(Archive &ar, std::atomic<T> &t, const unsigned int version)
+        {
+            boost::serialization::split_free(ar, t, version);
+        }
+    }
 }
 
 namespace MCTS
@@ -40,25 +64,39 @@ namespace MCTS
             return *this;
         }
 
-        Con4 state;          // Board corresponding to this node
+        template <class Archive>
+        void serialize(Archive &ar, const unsigned int version)
+        {
+            ar & state;
+            ar & children;
+            ar & parent;
+            ar & wins;
+            ar & visits;
+            ar & col;
+            ar & turn;
+            ar & leaf;
+            ar & defined;
+        }
+
+        Con4 state;                       // Board corresponding to this node
         std::vector<Node> children{};     // Child nodes
         Node *parent = nullptr;           // Parent node
         std::atomic_int wins = 0;         // Number of winning simulations containing this node
         std::atomic_int visits = 0;       // Number of total sumulations containing this node
         std::atomic_int col = 0;          // Column where piece was placed last
-        std::atomic_bool turn = false;        // Player whose turn it is
+        std::atomic_bool turn = false;    // Player whose turn it is
         std::atomic_bool leaf = true;     // Leaf node
         std::atomic_bool defined = false; // Child nodes instantiated
     };
 
     void define(Node *node);                                // Instatiates child nodes
-    double UCT(Node &node);                            // Returns the UCT of a node
+    double UCT(Node &node);                                 // Returns the UCT of a node
     Node *select(Node *node);                               // Selection step of MCTS
     Node *expand(Node *node);                               // Expansion step of MCTS
     int simulate(Node *node);                               // Simulation step of MCTS
     void backprop(Node *node, Node *root, const int favor); // Backpropagation step of MCTS
     Node *find(const Con4 &board);                          // Finds the node corresponding to a game state
-    void *eval(Node *root);                                  // Does the evalution stuff
+    void eval(Node *root);                                  // Does the evalution stuff
     int controller(const Con4 &board);                      // Controls the MCTS AI
 };
 
