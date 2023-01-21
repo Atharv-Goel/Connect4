@@ -1,4 +1,4 @@
-#include "options.hpp"
+#include "run.hpp"
 #include "ai.hpp"
 #include "con4.hpp"
 #include <SDL.h>
@@ -9,7 +9,8 @@ MCTS::Node ROOT;
 
 int main()
 {
-    {
+    // If there is a data file and serializing is on, then load it
+    if (SERIALIZATION) {
         std::ifstream ifs("data.txt");
         if (ifs.peek() == std::ifstream::traits_type::eof())
         {
@@ -34,15 +35,12 @@ int main()
         std::cout << "Error initializing TTF: " << TTF_GetError() << std::endl;
     }
 
-    // Display
-    SDL_Window *win = SDL_CreateWindow("CONNECT 4", // Create the window
-                                       SDL_WINDOWPOS_CENTERED,
-                                       SDL_WINDOWPOS_CENTERED,
-                                       800, 720, 0);
+    SDL_Window *win = SDL_CreateWindow("CONNECT 4", SDL_WINDOWPOS_CENTERED, 
+                                       SDL_WINDOWPOS_CENTERED, 800, 720, 0);    // Create the window
     SDL_Renderer *rend = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED); // Create the renderer
     TTF_Font *font = TTF_OpenFont("../LilitaOne-Regular.ttf", 85);              // Initalize Font
 
-    Con4 board;     // Create the board
+    Con4 board;         // Create the board
     ROOT.state = board; // Link the root node to the empty board
 
     int winner;   // Winner of game
@@ -55,34 +53,37 @@ int main()
     SDL_Event e;
     while (true)
     {
+        //Check for events
         if (SDL_PollEvent(&e))
         {
-            if (e.type == SDL_QUIT)
-            { // Exit
+            // Check for exit
+            if (e.type == SDL_QUIT) {
+                // Destroy all the graphics
                 TTF_Quit();
                 SDL_DestroyRenderer(rend);
                 SDL_DestroyWindow(win);
                 SDL_Quit();
-                {
+                // Save the data into a file
+                if (SERIALIZATION) {
                     std::ofstream ofs("data.txt");
                     boost::archive::text_oarchive oa(ofs);
                     oa << ROOT;
                 }
                 return 1;
             }
-            else if (e.type == SDL_MOUSEBUTTONDOWN)
-            { // Play again
-                if (reset) // Game needs to be reset
-                {
+            //Check for click
+            else if (e.type == SDL_MOUSEBUTTONDOWN) {
+                // Reset game if needed
+                if (reset) {
                     board.reset();
                     output(board, rend);
                     reset = false;
                     turn = 1;
                 }
-                else
-                {
+                // Play a move and display the board
+                else {
                     choice = find(board, turn);
-                    board.drop(choice, turn); // Drop the piece
+                    board.drop(choice, turn);
                     turn = 3 - turn;
                     if (board.check() || board.pos().size() == 0)
                     {

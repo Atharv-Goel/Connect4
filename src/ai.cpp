@@ -1,15 +1,13 @@
 #include "ai.hpp"
-#include <algorithm>
 #include <iostream>
-#include <chrono>
 #include <vector>
 #include <thread>
 #include <mutex>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
+// Multithreading setup
 #define NUMTHREADS 1
-
 std::vector<bool> jobs;
 std::mutex jobsMutex;
 std::thread threads[NUMTHREADS];
@@ -159,21 +157,16 @@ int MCTS::controller(const Con4 &board)
     // Find the node corresponding to the board
     Node* root = find(board);
 
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    if (true)
+    // Keep simulating paths while there are resources using multithreading if enabled
+    if (MULTITHREADING)
     {
-        // Keep simulating paths while there are resources
-        for (int n = 0; n < 100; n++)
-        {
-            eval(root);
-        }
-    }
-    else {
+        // Add jobs to the queue
         jobs = {};
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < RESOURCES; i++) {
             jobs.push_back(0);
         }
 
+        // Start threads
         for (int i = 0; i < NUMTHREADS; i++) {
             threads[i] = std::thread ([&](){ while (!jobs.empty()) {
                 jobs.pop_back();
@@ -181,21 +174,24 @@ int MCTS::controller(const Con4 &board)
             }});
         }
 
+        // Wait for threads to finish
         for (int i = 0; i < NUMTHREADS; i++) {
             threads[i].join();
         }
+        
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    //std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+    else {
+        for (int n = 0; n < RESOURCES; n++) {
+            eval(root);
+        }
+    }
 
     // Modified select function that chooses child node by ranking UCT
-    double max = 0;
+    double max = -1;
     Node* chosen = root;
     double val = 0;
-    for (Node &child : chosen->children)
-    {
-        if ((val = ((double) child.wins) / child.visits) > max)
-        {
+    for (Node &child : chosen->children) {
+        if ((val = ((double) child.wins) / child.visits) > max) {
             max = val;
             chosen = &child;
         }

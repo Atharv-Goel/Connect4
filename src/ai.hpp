@@ -1,5 +1,6 @@
 #pragma once
 #include "con4.hpp"
+#include "options.hpp"
 #include <random>
 #include <boost/serialization/vector.hpp>
 
@@ -15,6 +16,7 @@ T *random(std::vector<T> &iterable)
     return it;
 }
 
+// Serialize atomic types
 namespace boost
 {
     namespace serialization
@@ -39,18 +41,22 @@ namespace boost
     }
 }
 
+// Monte Carlo Tree Search
 namespace MCTS
 {
+    static const int RESOURCES = 100;
+
+    // Node class
     struct Node
     {
-        Node() = default;
+        Node() = default; // Default constructor
 
-        Node(const Node &rhs) noexcept
+        Node(const Node &rhs) noexcept // Copy constructor
         {
             *this = rhs;
         }
 
-        Node &operator=(const Node &rhs) noexcept
+        Node &operator=(const Node &rhs) noexcept // Assignment operator
         {
             turn = rhs.turn.load();
             state = rhs.state;
@@ -64,6 +70,7 @@ namespace MCTS
             return *this;
         }
 
+        // Serialization
         template <class Archive>
         void serialize(Archive &ar, const unsigned int version)
         {

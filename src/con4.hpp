@@ -7,6 +7,7 @@ class Con4 : public Tern
 {
 
 private:
+    // Serialization
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
