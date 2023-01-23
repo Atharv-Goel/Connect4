@@ -28,8 +28,8 @@ MCTS::Node* MCTS::select(Node* node)
         // Make sure that the children nodes have been instantiated
         define(newNode);
         newNode->visits += 1;
+
         max = 0;
-       
         // Keep choosing children by ranking UCT
         for (Node &child : newNode->children)
         {
@@ -94,7 +94,12 @@ int MCTS::simulate(Node* node)
     {
         // Instantiate children if not defined
         define(newNode);
-        newNode = random(newNode->children);
+        // Choose a random child using win ratio as weights
+        std::vector<double> weights;
+        for (Node &child : newNode->children) {
+            weights.push_back(((double) child.wins) / child.visits);
+        }
+        newNode = randomWeight(newNode->children, weights);
     }
     // Return the game winner
     return newNode->state.check();
@@ -103,12 +108,22 @@ int MCTS::simulate(Node* node)
 void MCTS::backprop(Node* node, Node* root, const int favor)
 {
     Node* newNode = node;
-    while (newNode->state != root->state)
+    while (newNode != root)
     {
-        newNode->wins += (2 * (newNode->turn ^ (favor - 1)) + !favor) / 2;
+        if (!newNode->turn == favor - 1) {
+            newNode->wins += 2;
+        }
+        else if (favor == 0) {
+            newNode->wins += 1;
+        }
         newNode = newNode->parent;
     }
-    newNode->wins += (2 * (newNode->turn ^ (favor - 1)) + !favor) / 2;
+    if (newNode->turn == favor - 1) {
+        newNode->wins += 2;
+    }
+    else if (favor == 0) {
+        newNode->wins += 1;
+    }
 }
 
 MCTS::Node* MCTS::find(const Con4 &board)
@@ -187,7 +202,7 @@ int MCTS::controller(const Con4 &board)
     }
 
     // Modified select function that chooses child node by ranking UCT
-    double max = -1;
+    double max = -10;
     Node* chosen = root;
     double val = 0;
     for (Node &child : chosen->children) {

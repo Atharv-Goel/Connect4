@@ -16,6 +16,17 @@ T *random(std::vector<T> &iterable)
     return it;
 }
 
+template <typename T>
+T *randomWeight(std::vector<T> &iterable, std::vector<double> &weights)
+{
+    assert(iterable.size() > 0 && "Invalid Size");
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::discrete_distribution<> dis(weights.begin(), weights.end());
+    T *it = &iterable[dis(gen)];
+    return it;
+}
+
 // Serialize atomic types
 namespace boost
 {

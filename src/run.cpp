@@ -123,50 +123,7 @@ void output(const Con4 &board, SDL_Renderer *rend)
     SDL_RenderPresent(rend); // Draw the renderer on the screen
 }
 
-int find(const Con4 &board, const int turn)
+int find(const Con4 &board)
 {
-    if (turn == 0) {
-        // Find all available columns and add them to the vector
-        std::vector<int> pos = board.pos();
-
-        // Check to see if there are any valid moves
-        if (pos.size() == 0)
-        {
-            return -1;
-        }
-
-        /*
-        int choice = -1;
-        do {
-            std::cout << "move: ";
-            std::cin >> choice;
-        } while (!(std::count(pos.begin(), pos.end(), choice)));
-        return choice;*/
-        return *random(pos);
-    }
-    else {
-        return(MCTS::controller(board));
-    }
-}
-
-int run(Con4 &board)
-{
-    // Connect 4 variables
-    int turn = 1;
-    int choice;
-    int favor;
-
-    // Play until connect 4
-    do
-    {
-        choice = find(board, turn); // Get the chosen move
-        if (choice < 0)
-        { // Tie
-            return 0;
-        }
-        board.drop(choice, turn);  // Drop the piece
-        turn = 3 - turn;           // Switch to other player's turn
-    } while (!(favor = board.check()));
-
-    return favor;
+    return(MCTS::controller(board));
 }

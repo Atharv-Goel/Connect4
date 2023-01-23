@@ -51,10 +51,22 @@ int main()
     output(board, rend); // Draw the board
 
     SDL_Event e;
+    int posx, posy;
+    bool go = false;
     while (true)
     {
-        //Check for events
-        if (SDL_PollEvent(&e))
+        if (turn == 1 && RED == 1 && RAPID) {
+            go = true;
+        }
+        else if (turn == 2 && YELLOW == 1 && RAPID) {
+            go = true;
+        }
+        else {
+            go = false;
+        }
+
+        // Check for events
+        if (SDL_PollEvent(&e) || go)
         {
             // Check for exit
             if (e.type == SDL_QUIT) {
@@ -71,8 +83,9 @@ int main()
                 }
                 return 1;
             }
-            //Check for click
-            else if (e.type == SDL_MOUSEBUTTONDOWN) {
+            // Check for click
+            else if (e.type == SDL_MOUSEBUTTONDOWN || go) {
+                SDL_GetMouseState(&posx, &posy);
                 // Reset game if needed
                 if (reset) {
                     board.reset();
@@ -82,7 +95,23 @@ int main()
                 }
                 // Play a move and display the board
                 else {
-                    choice = find(board, turn);
+                    if (turn == 1 && RED == 1)
+                    {
+                        choice = find(board);
+                    }
+                    else if (turn == 2 && YELLOW == 1)
+                    {
+                        choice = find(board);
+                    }
+                    else
+                    {
+                        choice = (posx - 120) / 80;
+                        std::vector<int> pos = board.pos();
+                        if (!(std::count(pos.begin(), pos.end(), choice)))
+                        {
+                            continue;
+                        }
+                    }
                     board.drop(choice, turn);
                     turn = 3 - turn;
                     if (board.check() || board.pos().size() == 0)
